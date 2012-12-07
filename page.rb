@@ -3,58 +3,34 @@ require 'open-uri'
 require 'nokogiri'
 
 class Page
-  attr_accessor :url, :url_array, :index, :uri, :i, :flag
-  # attr_writer :url_array
+  attr_accessor :links_array, :url
 
-  def initialize(url, index)
-     @index = index
+  def initialize()
      @url = url
-     @url_array = []
-     @uri = []
-     @i = 0
-     @flag = true
+     @links_array = []
   end
 
-  def content
-     open(@url)
-  end
-
-  def document
-     @document ||= Nokogiri::HTML(content)
-  end
-
-  def links
-     document.css("a").each {|link| @url_array << link["href"]}
-     @url_array.each{|l| puts l}
-  end  
-  
-  def crawler
-    if @i == @index
-       "END"  
-    else
-      if @url != nil
-         self.links
-      end    
-    end
-    
-    if @flag == true
-       @uri = @url_array
-       @url_array = []
-       self.craw 
-    end 
-  end
- 
-  def craw
-    @uri.each do |l|
-       @url = l
-       @flag = false
-       self.crawler
-    end
-    @url = nil
-    @i += 1
-    self.crawler
-  end
+  def links(url)
+     uri = URI(url)
+     document = Nokogiri::HTML(open(url))
+     document.css("a").each do |link|
+         if(link['href'])&&(link['href'].match(/https/))
+	  @links_array << link['href']
+	 else
+	  if (link['href'])&&(!link['href'].match(/#ja-/))
+	     if (link['href'])&&(!link['href'].match(/^http:/))
+	        @links_array << "http://"+uri.host+(link['href'])
+             else
+	        @links_array << link['href']
+             end
+          end
+	 end 
+     end
+#     document.css("a").each {|l| @link_array}
+     @links_array.each{|l| puts l}
+     @links_array
+  end    
 end
 
-c = Page.new("http://www.google.com", 3)
-puts c.crawler
+c = Page.new()
+c.links("http://www.google.com")
